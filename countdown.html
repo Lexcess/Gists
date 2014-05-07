@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>MS GPD Hackday</title>
+    <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
+    <style>
+        body {
+            font-family: 'Segoe UI',Verdana, Arial;
+        }
+        .button {
+            border: none 1px #cccccc;
+            width: 100px;
+            text-align: center;
+            padding: 2px 5px 6px 5px;
+            margin:1px;
+            display: inline-block;
+            color: #cccccc;
+        }
+        .button:active {
+            background-color: #cccccc;
+            color: #ffffff;
+        }
+            .button:hover {
+                margin: 0px;
+                border: solid 1px #cccccc;
+            }
+        #countdown {
+            text-align: center;
+            font-size: 400px;
+            line-height:350px;
+        }
+        #content {
+            margin-top: 50px;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <div id="content">
+        <div id="doDemo" class="button">Presentation</div>
+        <div id="pause" class="button">Pause</div>
+        <div id="resume" class="button">Resume</div>
+        <div id="doQnA" class="button">Q &amp; A</div>
+    </div>
+    <div id="content">
+        <img src="HackdayLogoBig.png" width="500" />
+    </div>
+    <div id="countdown">0:00</div>
+    <script>
+        var CountDown = (function ($) {
+            // Length ms
+            var TimeOut     = 10000; //60000 1= 1 min
+            // Interval ms
+            var interval    = 1000;
+            var warnBuffer  = 30000;
+
+            var CurrentTime = (new Date()).getTime();
+            var EndTime     = (new Date()).getTime() + TimeOut;
+
+            var GuiBody     = $('body');
+            var GuiTimer    = $('#countdown');
+            var GuiPause    = $('#pause');
+            var GuiResume   = $('#resume').hide();
+            var GuiDemo     = $('#doDemo');
+            var GuiQnA      = $('#doQnA');
+
+            var Running     = true;
+
+            var UpdateTimer = function () {
+                // Run till timeout
+                if (CurrentTime + interval < EndTime) {
+                    setTimeout(UpdateTimer, interval);
+                }
+                // Countdown if running
+                if (Running) {
+                    CurrentTime += interval;
+                    if (CurrentTime >= (EndTime - warnBuffer)) {
+                        SetWarnDisplay();
+                    }
+                }
+                // Update Gui
+                var Time    = new Date();
+                Time.setTime(EndTime - CurrentTime);
+                var Minutes = Time.getMinutes();
+                var Seconds = Time.getSeconds();
+
+                GuiTimer.html(
+                    //(Minutes < 10 ? '0' : '') +
+                    Minutes
+                    + ':'
+                    + (Seconds < 10 ? '0' : '') + Seconds);
+            };
+
+            var SetReadyDisplay = function ()
+            {
+                GuiBody.css('background-color', 'white');
+                GuiTimer.css('color', '#000000');
+            }
+
+            var SetWarnDisplay = function () {
+                GuiBody.css('background-color', 'red');
+                GuiTimer.css('color', '#ffffff');
+            }
+
+            var Pause = function () {
+                Running     = false;
+                GuiPause.hide();
+                GuiResume.show();
+            };
+
+            var Resume = function () {
+                Running     = true;
+                GuiPause.show();
+                GuiResume.hide();
+            };
+
+            var Start = function (Timeout) {
+                GuiResume.hide();
+                Running     = true;
+                TimeOut     = Timeout;
+                CurrentTime = (new Date()).getTime();
+                EndTime     = (new Date()).getTime() + TimeOut;
+                UpdateTimer();
+            };
+
+            var DoDemo = function () {
+                SetReadyDisplay();
+                //Start(10000);
+                Start(240000);
+            };
+
+            var DoQnA = function () {
+                SetReadyDisplay();
+                Start(180000);
+            };
+
+            return {
+                Pause: Pause,
+                Resume: Resume,
+                Start: Start,
+                DoDemo: DoDemo,
+                DoQnA: DoQnA
+            };
+        })(jQuery);
+
+        jQuery('#pause').on('click', CountDown.Pause);
+        jQuery('#resume').on('click', CountDown.Resume);
+        jQuery('#doDemo').on('click', CountDown.DoDemo);
+        jQuery('#doQnA').on('click', CountDown.DoQnA);
+
+    </script>
+</body>
+
+</html>
