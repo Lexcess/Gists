@@ -20,7 +20,7 @@
             background-color: #cccccc;
             color: #ffffff;
         }
-            .button:hover {
+        .button:hover {
                 margin: 0px;
                 border: solid 1px #cccccc;
             }
@@ -47,106 +47,100 @@
     </div>
     <div id="countdown">0:00</div>
     <script>
-        var CountDown = (function ($) {
-            // Length ms
-            var TimeOut     = 10000; //60000 1= 1 min
-            // Interval ms
+        var Timer = (function ($) {
+
             var interval    = 1000;
-            var warnBuffer  = 30000;
+            var warnBuffer  = 5000; //60000 = 1 min
 
-            var CurrentTime = (new Date()).getTime();
-            var EndTime     = (new Date()).getTime() + TimeOut;
+            var timer       = null;
+            var currentTime = null;
+            var endTime     = null;
 
-            var GuiBody     = $('body');
-            var GuiTimer    = $('#countdown');
-            var GuiPause    = $('#pause');
-            var GuiResume   = $('#resume').hide();
-            var GuiDemo     = $('#doDemo');
-            var GuiQnA      = $('#doQnA');
+            // gui bindings
+            var guiBody     = $('body');
+            var guiTimer    = $('#countdown');
+            var guiPause    = $('#pause').hide();
+            var guiResume   = $('#resume').hide();
 
-            var Running     = true;
+            // gui methods
 
-            var UpdateTimer = function () {
-                // Run till timeout
-                if (CurrentTime + interval < EndTime) {
-                    setTimeout(UpdateTimer, interval);
-                }
-                // Countdown if running
-                if (Running) {
-                    CurrentTime += interval;
-                    if (CurrentTime >= (EndTime - warnBuffer)) {
-                        SetWarnDisplay();
-                    }
-                }
-                // Update Gui
-                var Time    = new Date();
-                Time.setTime(EndTime - CurrentTime);
-                var Minutes = Time.getMinutes();
-                var Seconds = Time.getSeconds();
+            var SetReadyDisplay = function () {
+                guiResume.hide();
+                guiPause.show();
+                guiBody.css('background-color', 'white');
+                guiTimer.css('color', '#000000');
+            }
 
-                GuiTimer.html(
-                    //(Minutes < 10 ? '0' : '') +
-                    Minutes
-                    + ':'
-                    + (Seconds < 10 ? '0' : '') + Seconds);
+            var setWarnDisplay = function () {
+                guiBody.css('background-color', 'red');
+                guiTimer.css('color', '#ffffff');
+            }
+
+            var setDisplay = function (minutes, seconds) {
+                guiTimer.html(
+                //(minutes < 10 ? '0' : '') +
+                minutes + ':'
+                + (seconds < 10 ? '0' : '') + seconds);
+            }
+
+            var pause = function () {
+                clearInterval(timer);
+                guiPause.hide();
+                guiResume.show();
             };
 
-            var SetReadyDisplay = function ()
+            var resume = function () {
+                setInterval(function () { doTimerUpdate() }, interval);
+                guiPause.show();
+                guiResume.hide();
+            };
+
+            // Timer methods
+
+            var doTimerUpdate = function () {
+                // Run till endTime
+                if (currentTime + interval >= endTime)
+                {
+                    setDisplay(0, 0);
+                    clearInterval(timer);
+                }
+
+                currentTime += interval;
+
+                if (currentTime >= (endTime - warnBuffer))
+                {
+                    setWarnDisplay();
+                }
+
+                // Update gui
+                var time    = new Date();
+                time.setTime(endTime - currentTime);
+
+                setDisplay(time.getMinutes(), time.getSeconds());
+            };
+
+            var start = function (event)
             {
-                GuiBody.css('background-color', 'white');
-                GuiTimer.css('color', '#000000');
-            }
-
-            var SetWarnDisplay = function () {
-                GuiBody.css('background-color', 'red');
-                GuiTimer.css('color', '#ffffff');
-            }
-
-            var Pause = function () {
-                Running     = false;
-                GuiPause.hide();
-                GuiResume.show();
-            };
-
-            var Resume = function () {
-                Running     = true;
-                GuiPause.show();
-                GuiResume.hide();
-            };
-
-            var Start = function (Timeout) {
-                GuiResume.hide();
-                Running     = true;
-                TimeOut     = Timeout;
-                CurrentTime = (new Date()).getTime();
-                EndTime     = (new Date()).getTime() + TimeOut;
-                UpdateTimer();
-            };
-
-            var DoDemo = function () {
+                if (timer != null) { clearInterval(timer);}
                 SetReadyDisplay();
-                //Start(10000);
-                Start(240000);
-            };
 
-            var DoQnA = function () {
-                SetReadyDisplay();
-                Start(180000);
+                currentTime     = (new Date()).getTime();
+                endTime         = (new Date()).getTime() + event.data.timeOut;
+                timer           = setInterval(function () { doTimerUpdate() }, interval);
+
             };
 
             return {
-                Pause: Pause,
-                Resume: Resume,
-                Start: Start,
-                DoDemo: DoDemo,
-                DoQnA: DoQnA
+                pause: pause,
+                resume: resume,
+                start: start
             };
         })(jQuery);
 
-        jQuery('#pause').on('click', CountDown.Pause);
-        jQuery('#resume').on('click', CountDown.Resume);
-        jQuery('#doDemo').on('click', CountDown.DoDemo);
-        jQuery('#doQnA').on('click', CountDown.DoQnA);
+        jQuery('#pause').on('click', Timer.pause);
+        jQuery('#resume').on('click', Timer.resume);
+        jQuery('#doDemo').on('click', { timeOut: 10000 }, Timer.start);
+        jQuery('#doQnA').on('click', { timeOut: 180000 }, Timer.start);
 
     </script>
 </body>
